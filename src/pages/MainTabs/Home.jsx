@@ -11,10 +11,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useAppTheme } from '../../Theme/ThemeContext';
 import AddDataModal from '../../components/AddData';
+import PatientName from "../../components/PatientName"
 
 export default function Home({ navigation }) {
   const { colors } = useAppTheme();
   const [showAddDataModal, setShowAddDataModal] = useState(false);
+  const [PatientNameModal, setPatientNameModal] = useState(false);
 
   const StatCard = ({ icon, title, value, color }) => (
     <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -70,7 +72,7 @@ export default function Home({ navigation }) {
             icon="virus"
             title="Disease Prediction"
             description="Predict diseases using ML models"
-            onPress={() => navigation.navigate('Disease Match')}
+            onPress={() => setPatientNameModal(true)}
           />
 
           <QuickAction
@@ -95,6 +97,12 @@ export default function Home({ navigation }) {
       <AddDataModal
         visible={showAddDataModal}
         onClose={() => setShowAddDataModal(false)}
+        navigation={navigation}
+        colors={colors}
+      />
+       <PatientName
+        visible={PatientNameModal}
+        onClose={() => setPatientNameModal(false)}
         navigation={navigation}
         colors={colors}
       />
