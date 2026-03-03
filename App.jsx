@@ -1,4 +1,6 @@
 import { StatusBar } from 'react-native';
+import { Provider } from 'react-redux';
+import { store } from './Store/store';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { ThemeProvider, useAppTheme } from './src/Theme/ThemeContext';
@@ -23,12 +25,14 @@ function AppContent() {
 }
 
 function App() {
-  return (
+  return (  
+     <Provider store={store}>
     <SafeAreaProvider>
       <ThemeProvider>
         <AppContent />
       </ThemeProvider>
     </SafeAreaProvider>
+      </Provider>
   );
 }
 

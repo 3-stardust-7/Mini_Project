@@ -8,6 +8,9 @@ import {
   TextInput,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useDispatch } from 'react-redux';
+import { setSelectedPatient } from '../../Store/PatientSlice';
+import { useNavigation } from '@react-navigation/native';
 
 const PatientNameModal = ({
   visible,
@@ -16,16 +19,67 @@ const PatientNameModal = ({
   onSubmit, // optional callback for later DB fetch
 }) => {
   const [patientName, setPatientName] = useState('');
+  const dispatch = useDispatch();
+  const navigation = useNavigation();
 
-  const handleSubmit = () => {
-    if (!patientName.trim()) return;
+  // const handleSubmit = () => {
+  //   if (!patientName.trim()) return;
 
-    // For now just pass value upward
-    if (onSubmit) onSubmit(patientName);
+  //   // For now just pass value upward
+  //   if (onSubmit) onSubmit(patientName);
+
+  //   setPatientName('');
+  //   onClose();
+  // };
+  const handleSubmit = async () => {
+  if (!patientName.trim()) return;
+
+  const url = `https://uhpinfogzptzsvulhpvr.supabase.co/rest/v1/Patient?Name=ilike.%25${patientName}%25`;
+
+  console.log("Fetching URL:", url);
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+          apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVocGluZm9nenB0enN2dWxocHZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMjQyNjEsImV4cCI6MjA2OTgwMDI2MX0.PrVCuwG314G4x3YW-b3p1-xHDLjcLyLbxvh4fMt_UvE',
+          Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVocGluZm9nenB0enN2dWxocHZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMjQyNjEsImV4cCI6MjA2OTgwMDI2MX0.PrVCuwG314G4x3YW-b3p1-xHDLjcLyLbxvh4fMt_UvE',
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+    });
+
+    console.log("Status:", response.status);
+
+    const text = await response.text();
+    console.log("Raw response:", text);
+
+    if (!response.ok) {
+      throw new Error("HTTP error " + response.status);
+    }
+
+    const data = JSON.parse(text);
+
+    console.log("Parsed data:", data);
+
+    if (!data.length) {
+      alert('No patient found');
+      return;
+    }
+
+    const patient = data[0];
+
+    dispatch(setSelectedPatient(patient));
 
     setPatientName('');
     onClose();
-  };
+    navigation.navigate('DiseasePredict');
+
+  } catch (error) {
+    console.error("FULL ERROR:", error);
+    alert('Error fetching patient — check terminal');
+  }
+};
 
   return (
     <Modal
