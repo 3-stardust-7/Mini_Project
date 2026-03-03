@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useAppTheme } from '../../Theme/ThemeContext';
+import AddDataModal from '../../components/AddData';
 
 export default function Home({ navigation }) {
   const { colors } = useAppTheme();
@@ -91,65 +92,15 @@ export default function Home({ navigation }) {
       </ScrollView>
 
       {/* ================= MODAL ================= */}
-      <Modal
+      <AddDataModal
         visible={showAddDataModal}
-        transparent
-        animationType="fade"
-        presentationStyle="overFullScreen"
-        statusBarTranslucent
-        onRequestClose={() => setShowAddDataModal(false)}
-      >
-        {/* Dark background */}
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={() => setShowAddDataModal(false)}
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: 'rgba(0,0,0,0.75)' },
-          ]}
-        />
-
-        {/* Modal Card */}
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Add Data</Text>
-
-            <TouchableOpacity
-              style={styles.modalOption}
-              onPress={() => {
-              setShowAddDataModal(false);
-                navigation.navigate('AddPatient');
-              }}
-            >
-              <Icon name="account-plus" size={22} color={colors.primary} />
-              <Text style={[styles.modalText, { color: colors.text }]}>Add Patient</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.modalOption}
-              onPress={() => {
-                setShowAddDataModal(false);
-                navigation.navigate('AddDonor');
-              }}
-            >
-              <Icon name="heart-plus" size={22} color={colors.success} />
-              <Text style={[styles.modalText, { color: colors.text }]}>Add Donor</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => setShowAddDataModal(false)}
-              style={[styles.closeBtn, { borderColor: colors.border }]}
-            >
-              <Text style={{ color: colors.textSecondary }}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setShowAddDataModal(false)}
+        navigation={navigation}
+        colors={colors}
+      />
     </SafeAreaView>
   );
 }
-
-/* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
