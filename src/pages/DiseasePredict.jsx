@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,21 @@ import {
   ScrollView,
   TouchableOpacity,
   Animated,
+  Alert,           
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppTheme } from '../../src/Theme/ThemeContext';
 import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
+
+const API_URL = 'https://uhpinfogzptzsvulhpvr.supabase.co/rest/v1';
+const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVocGluZm9nenB0enN2dWxocHZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMjQyNjEsImV4cCI6MjA2OTgwMDI2MX0.PrVCuwG314G4x3YW-b3p1-xHDLjcLyLbxvh4fMt_UvE';
+
+const HEADERS = {
+  apikey: API_KEY,
+  Authorization: `Bearer ${API_KEY}`,
+  'Content-Type': 'application/json',
+};
 
 const FIELD_META = {
   Name:       { icon: '👤', label: 'FULL NAME' },
@@ -54,6 +64,76 @@ const DetailCard = ({ icon, label, value, colors, delay }) => {
   );
 };
 
+const SectionLabel = ({ text, colors }) => (
+  <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>{text}</Text>
+);
+
+const SymptomToggle = ({ label, icon, value, onChange, colors }) => {
+  return (
+    <View style={[styles.symptomCard, { backgroundColor: colors.card, borderColor: value !== null ? colors.primary : colors.border }]}>
+      <View style={styles.symptomHeader}>
+        <Text style={styles.symptomIcon}>{icon}</Text>
+        <Text style={[styles.symptomLabel, { color: colors.text }]}>{label}</Text>
+      </View>
+      <View style={styles.pillRow}>
+        {['Yes', 'No'].map(opt => {
+          const active = value === opt;
+          const isYes = opt === 'Yes';
+          return (
+            <TouchableOpacity
+              key={opt}
+              onPress={() => onChange(opt)}
+              activeOpacity={0.75}
+              style={[
+                styles.pill,
+                active
+                  ? { backgroundColor: isYes ? '#EF4444DD' : '#22C55EDD', borderColor: 'transparent' }
+                  : { backgroundColor: 'transparent', borderColor: colors.border },
+              ]}
+            >
+              <Text style={[styles.pillText, { color: active ? '#fff' : colors.textSecondary }]}>
+                {opt}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
+  );
+};
+
+const SegmentedControl = ({ label, icon, value, onChange, colors, options = ['Normal', 'High'] }) => (
+  <View style={[styles.symptomCard, { backgroundColor: colors.card, borderColor: value !== null ? colors.primary : colors.border }]}>
+    <View style={styles.symptomHeader}>
+      <Text style={styles.symptomIcon}>{icon}</Text>
+      <Text style={[styles.symptomLabel, { color: colors.text }]}>{label}</Text>
+    </View>
+    <View style={styles.pillRow}>
+      {options.map(opt => {
+        const active = value === opt;
+        return (
+          <TouchableOpacity
+            key={opt}
+            onPress={() => onChange(opt)}
+            activeOpacity={0.75}
+            style={[
+              styles.pill,
+              { flex: 1 },
+              active
+                ? { backgroundColor: colors.primary, borderColor: 'transparent' }
+                : { backgroundColor: 'transparent', borderColor: colors.border },
+            ]}
+          >
+            <Text style={[styles.pillText, { color: active ? '#fff' : colors.textSecondary }]}>
+              {opt}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  </View>
+);
+
 export default function DiseasePredict() {
   const { colors } = useAppTheme();
   const navigation = useNavigation();
@@ -62,12 +142,67 @@ export default function DiseasePredict() {
   const headerFade = useRef(new Animated.Value(0)).current;
   const headerSlide = useRef(new Animated.Value(-12)).current;
 
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(headerFade, { toValue: 1, duration: 500, useNativeDriver: true }),
-      Animated.timing(headerSlide, { toValue: 0, duration: 420, useNativeDriver: true }),
-    ]).start();
-  }, []);
+  // Symptom fields
+  const [fever, setFever] = useState(null);
+  const [cough, setCough] = useState(null);
+  const [fatigue, setFatigue] = useState(null);
+  const [difficultyBreathing, setDifficultyBreathing] = useState(null);
+  const [bloodPressure, setBloodPressure] = useState(null);
+  const [cholesterol, setCholesterol] = useState(null);
+
+  const [loading, setLoading] = useState(false);
+
+  const validateFields = () => {
+    if (!fever)              return 'Please answer: Fever?';
+    if (!cough)              return 'Please answer: Cough?';
+    if (!fatigue)            return 'Please answer: Fatigue?';
+    if (!difficultyBreathing) return 'Please answer: Difficulty Breathing?';
+    if (!bloodPressure)      return 'Please select Blood Pressure level.';
+    if (!cholesterol)        return 'Please select Cholesterol level.';
+    return null;
+  };
+
+  const handleSubmit = async () => {
+    const error = validateFields();
+    if (error) {
+      Alert.alert('Incomplete Form', error);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const diseaseRes = await fetch(`${API_URL}/Patient-Disease`, {
+        method: 'POST',
+        headers: { ...HEADERS, Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          Name: patient.Name,  
+          Patient_id: patient.Patient_id,          
+          Fever: fever,
+          Cough: cough,
+          Fatigue: fatigue,
+          DifficultyBreathing: difficultyBreathing,
+          BloodPressure: bloodPressure,
+          CholesterolLevel: cholesterol,
+        }),
+      });
+
+      if (!diseaseRes.ok) {
+        const err = await diseaseRes.text();
+        console.error('Disease insert error:', err);
+        Alert.alert('Error', 'Failed to save symptom data.');
+        return;
+      }
+
+      Alert.alert('Success', 'Symptoms saved!', [
+        { text: 'OK', onPress: () => navigation.navigate('MainTabs') },
+      ]);
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!patient) {
     return (
@@ -116,7 +251,7 @@ export default function DiseasePredict() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
         {/* Hero / Avatar Block */}
-        <Animated.View
+        {/* <Animated.View
           style={[styles.heroSection, { opacity: headerFade, transform: [{ translateY: headerSlide }] }]}
         >
           <View style={[styles.avatar, { backgroundColor: colors.primary + '1A', borderColor: colors.primary + '44' }]}>
@@ -129,7 +264,7 @@ export default function DiseasePredict() {
                 .filter(Boolean).join('  ·  ') || 'No info available'}
             </Text>
           </View>
-        </Animated.View>
+        </Animated.View> */}
 
         {/* Section Label */}
         <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
@@ -150,6 +285,32 @@ export default function DiseasePredict() {
           ))}
         </View>
 
+        {/* Symptoms */}
+        <SectionLabel text="SYMPTOM INDICATORS" colors={colors} />
+        <View style={styles.symptomsGrid}>
+          <SymptomToggle label="Fever"               value={fever}               onChange={setFever}               colors={colors} />
+          <SymptomToggle label="Cough"               value={cough}               onChange={setCough}               colors={colors} />
+          <SymptomToggle label="Fatigue"             value={fatigue}             onChange={setFatigue}             colors={colors} />
+          <SymptomToggle label="Difficulty Breathing" value={difficultyBreathing} onChange={setDifficultyBreathing} colors={colors} />
+        </View>
+
+        {/* Vitals */}
+        <SectionLabel text="VITALS" colors={colors} />
+        <View style={styles.symptomsGrid}>
+          <SegmentedControl label="Blood Pressure"   value={bloodPressure} onChange={setBloodPressure} colors={colors} />
+          <SegmentedControl label="Cholesterol Level" value={cholesterol}   onChange={setCholesterol}   colors={colors} />
+        </View>
+
+        {/* Submit */}
+        <TouchableOpacity
+          style={[styles.submitBtn, { backgroundColor: loading ? colors.primary + '88' : colors.primary }]}
+          onPress={handleSubmit}
+          activeOpacity={0.8}
+          disabled={loading}
+        >
+          <Text style={styles.submitText}>{loading ? 'Saving...' : 'Save Symptoms'}</Text>
+        </TouchableOpacity>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -158,7 +319,6 @@ export default function DiseasePredict() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
 
-  // Empty state
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 36 },
   emptyIcon: { fontSize: 48, marginBottom: 16 },
   emptyTitle: { fontSize: 20, fontWeight: '700', marginBottom: 8 },
@@ -166,7 +326,6 @@ const styles = StyleSheet.create({
   emptyBackBtn: { paddingHorizontal: 28, paddingVertical: 13, borderRadius: 50 },
   emptyBackBtnText: { color: '#fff', fontWeight: '600', fontSize: 15 },
 
-  // Top bar
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -182,10 +341,8 @@ const styles = StyleSheet.create({
   backArrow: { fontSize: 28, lineHeight: 34, marginTop: -2, fontWeight: '300' },
   topBarTitle: { fontSize: 16, fontWeight: '600', letterSpacing: 0.3 },
 
-  // Scroll
   scrollContent: { paddingBottom: 48 },
 
-  // Hero
   heroSection: {
     alignItems: 'center',
     paddingTop: 36,
@@ -201,14 +358,12 @@ const styles = StyleSheet.create({
   heroPill: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 24 },
   heroPillText: { fontSize: 13, fontWeight: '600', letterSpacing: 0.4 },
 
-  // Section
   sectionLabel: {
     fontSize: 11, fontWeight: '700', letterSpacing: 1.3,
-    marginHorizontal: 20, marginBottom: 10,
+    marginHorizontal: 20, marginBottom: 15, marginTop: 24,
   },
 
-  // Cards
-  cardsWrap: { paddingHorizontal: 16, gap: 10 },
+  cardsWrap: { paddingHorizontal: 16, gap: 10, marginBottom: 24 },
   detailCard: {
     flexDirection: 'row', alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth, borderRadius: 16,
@@ -219,4 +374,29 @@ const styles = StyleSheet.create({
   detailTextGroup: { flex: 1 },
   detailLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1, marginBottom: 4 },
   detailValue: { fontSize: 16, fontWeight: '600' },
+
+  symptomsGrid: {
+    flexDirection: 'row', flexWrap: 'wrap',
+    gap: 10, marginBottom: 24, paddingHorizontal: 16,
+  },
+  symptomCard: {
+    width: '47.5%', borderWidth: 1, borderRadius: 16,
+    padding: 14, gap: 12,
+  },
+  symptomHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  symptomIcon: { fontSize: 20 },
+  symptomLabel: { fontSize: 13, fontWeight: '600', flex: 1 },
+
+  pillRow: { flexDirection: 'row', gap: 6 },
+  pill: {
+    flex: 1, paddingVertical: 7, borderRadius: 8,
+    borderWidth: 1, alignItems: 'center',
+  },
+  pillText: { fontSize: 13, fontWeight: '600' },
+
+  submitBtn: {
+    padding: 17, borderRadius: 16,
+    alignItems: 'center', marginTop: 8, marginHorizontal: 16,
+  },
+  submitText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 });
