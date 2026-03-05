@@ -12,11 +12,13 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useAppTheme } from '../../Theme/ThemeContext';
 import AddDataModal from '../../components/AddData';
 import PatientName from "../../components/PatientName"
+import DonorMatch from "../../components/DonorMatch"
 
 export default function Home({ navigation }) {
   const { colors } = useAppTheme();
   const [showAddDataModal, setShowAddDataModal] = useState(false);
   const [PatientNameModal, setPatientNameModal] = useState(false);
+  const [DonorMatchModal, setDonorMatchModal] = useState(false);
 
   const StatCard = ({ icon, title, value, color }) => (
     <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -79,7 +81,7 @@ export default function Home({ navigation }) {
             icon="dna"
             title="Donor Matching"
             description="HLA-based compatibility scoring"
-            onPress={() => navigation.navigate('Donor Match')}
+            onPress={() => setDonorMatchModal(true)}
           />
 
           <QuickAction
@@ -103,6 +105,12 @@ export default function Home({ navigation }) {
        <PatientName
         visible={PatientNameModal}
         onClose={() => setPatientNameModal(false)}
+        navigation={navigation}
+        colors={colors}
+      />
+      <DonorMatch
+        visible={DonorMatchModal}
+        onClose={() => setDonorMatchModal(false)}
         navigation={navigation}
         colors={colors}
       />
