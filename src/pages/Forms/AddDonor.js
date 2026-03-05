@@ -19,6 +19,12 @@ export default function AddDonor({ navigation }) {
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
   const [contact, setContact] = useState('');
+  const [cmvStatus, setCmvStatus] = useState('');
+  const [antigenDiff, setAntigenDiff] = useState('');
+  const [alleleDiff, setAlleleDiff] = useState('');
+  const [cd34Dose, setCd34Dose] = useState('');
+  const [cd3Dose, setCd3Dose] = useState('');
+  const [stemCellSource, setStemCellSource] = useState('');
 
   const handleSubmit = async () => {
   try {
@@ -38,6 +44,12 @@ export default function AddDonor({ navigation }) {
           Gender: gender,
           BloodGroup: bloodGroup,
           Contact: contact,
+          CMVStatus: cmvStatus,
+          AntigenDifferences: parseInt(antigenDiff),
+          AlleleDifferences: parseInt(alleleDiff),
+          CD34Dose: parseFloat(cd34Dose),
+          CD3Dose: parseFloat(cd3Dose),
+          StemCellSource: stemCellSource,
         }),
       }
     );
@@ -123,6 +135,52 @@ export default function AddDonor({ navigation }) {
               { borderColor: colors.border, color: colors.text },
             ]}
             onChangeText={setGender}
+          />
+
+          <TextInput
+            placeholder="CMV Status (present/absent)"
+            placeholderTextColor={colors.textSecondary}
+            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
+            onChangeText={setCmvStatus}
+          />
+
+          <TextInput
+            placeholder="Antigen Differences (0-3)"
+            keyboardType="numeric"
+            placeholderTextColor={colors.textSecondary}
+            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
+            onChangeText={setAntigenDiff}
+          />
+
+          <TextInput
+            placeholder="Allele Differences (0-4)"
+            keyboardType="numeric"
+            placeholderTextColor={colors.textSecondary}
+            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
+            onChangeText={setAlleleDiff}
+          />
+
+          <TextInput
+            placeholder="CD34+ Cell Dose (×10^6/kg)"
+            keyboardType="numeric"
+            placeholderTextColor={colors.textSecondary}
+            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
+            onChangeText={setCd34Dose}
+          />
+
+          <TextInput
+            placeholder="CD3+ Cell Dose (×10^8/kg)"
+            keyboardType="numeric"
+            placeholderTextColor={colors.textSecondary}
+            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
+            onChangeText={setCd3Dose}
+          />
+
+          <TextInput
+            placeholder="Stem Cell Source (peripheral_blood/bone_marrow)"
+            placeholderTextColor={colors.textSecondary}
+            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
+            onChangeText={setStemCellSource}
           />
 
           <TextInput

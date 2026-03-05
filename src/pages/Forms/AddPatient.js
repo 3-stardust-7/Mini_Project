@@ -19,6 +19,13 @@ export default function AddPatient({ navigation }) {
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
   const [contact, setContact] = useState('');
+  const [bodyMass, setBodyMass] = useState('');
+  const [rhFactor, setRhFactor] = useState('');
+  const [cmvStatus, setCmvStatus] = useState('');
+  const [diseaseType, setDiseaseType] = useState('');
+  const [diseaseGroup, setDiseaseGroup] = useState('');
+  const [riskGroup, setRiskGroup] = useState('');
+  const [postRelapse, setPostRelapse] = useState('');
 
  const handleSubmit = async () => {
   try {
@@ -38,6 +45,13 @@ export default function AddPatient({ navigation }) {
           Gender: gender,
           BloodGroup: bloodGroup,
           Contact: contact,
+          BodyMass: parseFloat(bodyMass),
+          RhFactor: rhFactor,
+          CMVStatus: cmvStatus,
+          DiseaseType: diseaseType,
+          DiseaseGroup: diseaseGroup,
+          RiskGroup: riskGroup,
+          PostRelapseTransplant: postRelapse.toLowerCase() === 'yes',
         }),
       }
     );
@@ -124,6 +138,56 @@ export default function AddPatient({ navigation }) {
               { borderColor: colors.border, color: colors.text },
             ]}
             onChangeText={setGender}
+          />
+
+          <TextInput
+            placeholder="Body Mass (kg)"
+            placeholderTextColor={colors.textSecondary}
+            keyboardType="numeric"
+            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
+            onChangeText={setBodyMass}
+          />
+
+          <TextInput
+            placeholder="Rh Factor (plus/minus)"
+            placeholderTextColor={colors.textSecondary}
+            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
+            onChangeText={setRhFactor}
+          />
+
+          <TextInput
+            placeholder="CMV Status (present/absent)"
+            placeholderTextColor={colors.textSecondary}
+            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
+            onChangeText={setCmvStatus}
+          />
+
+          <TextInput
+            placeholder="Disease Type"
+            placeholderTextColor={colors.textSecondary}
+            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
+            onChangeText={setDiseaseType}
+          />
+
+          <TextInput
+            placeholder="Disease Group (malignant/nonmalignant)"
+            placeholderTextColor={colors.textSecondary}
+            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
+            onChangeText={setDiseaseGroup}
+          />
+
+          <TextInput
+            placeholder="Risk Group (high/low)"
+            placeholderTextColor={colors.textSecondary}
+            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
+            onChangeText={setRiskGroup}
+          />
+
+          <TextInput
+            placeholder="Post Relapse Transplant (yes/no)"
+            placeholderTextColor={colors.textSecondary}
+            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
+            onChangeText={setPostRelapse}
           />
 
           <TextInput
