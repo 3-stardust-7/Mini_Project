@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,22 +7,18 @@ import {
   ScrollView,
   TouchableOpacity,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppTheme } from '../../src/Theme/ThemeContext';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 const FIELD_META = {
-  Age: {  label: 'AGE' },
+  Age: { label: 'AGE' },
   Gender: { label: 'GENDER' },
-  BloodGroup: {  label: 'BLOOD GROUP' },
-  Contact: {  label: 'CONTACT' },
-  CMVStatus: {  label: 'CMV STATUS' },
-  AntigenDifferences: {  label: 'ANTIGEN DIFFERENCES' },
-  AlleleDifferences: {  label: 'ALLELE DIFFERENCES' },
-  CD34Dose: {  label: 'CD34+ DOSE (×10⁶/kg)' },
-  CD3Dose: {  label: 'CD3+ DOSE (×10⁸/kg)' },
-  StemCellSource: {  label: 'STEM CELL SOURCE' },
+  BloodGroup: { label: 'BLOOD GROUP' },
+  Contact: { label: 'CONTACT' },
+  CMVStatus: { label: 'CMV STATUS' },
 };
 
 const DetailCard = ({ label, value, colors, delay }) => {
@@ -30,8 +27,18 @@ const DetailCard = ({ label, value, colors, delay }) => {
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fade, { toValue: 1, duration: 400, delay, useNativeDriver: true }),
-      Animated.timing(slide, { toValue: 0, duration: 350, delay, useNativeDriver: true }),
+      Animated.timing(fade, {
+        toValue: 1,
+        duration: 400,
+        delay,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slide, {
+        toValue: 0,
+        duration: 350,
+        delay,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
 
@@ -47,11 +54,13 @@ const DetailCard = ({ label, value, colors, delay }) => {
         },
       ]}
     >
-     
-
       <View style={{ flex: 1 }}>
-        <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
-        <Text style={[styles.value, { color: colors.text }]}>{value ?? '—'}</Text>
+        <Text style={[styles.label, { color: colors.textSecondary }]}>
+          {label}
+        </Text>
+        <Text style={[styles.value, { color: colors.text }]}>
+          {value ?? '—'}
+        </Text>
       </View>
     </Animated.View>
   );
@@ -61,22 +70,83 @@ export default function DonorDetail() {
   const { colors } = useAppTheme();
   const navigation = useNavigation();
   const route = useRoute();
-  const donor = route.params?.donor;
+
+  const donorId = route.params?.donorId;
+
+  const [donor, setDonor] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const headerFade = useRef(new Animated.Value(0)).current;
   const headerSlide = useRef(new Animated.Value(-12)).current;
 
   useEffect(() => {
+    fetchDonor();
+
     Animated.parallel([
-      Animated.timing(headerFade, { toValue: 1, duration: 500, useNativeDriver: true }),
-      Animated.timing(headerSlide, { toValue: 0, duration: 420, useNativeDriver: true }),
+      Animated.timing(headerFade, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(headerSlide, {
+        toValue: 0,
+        duration: 420,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
+
+  const fetchDonor = async () => {
+    try {
+      const response = await fetch(
+        `https://uhpinfogzptzsvulhpvr.supabase.co/rest/v1/Donor?Donor_id=eq.${donorId}&select=*`,
+        {
+          headers: {
+            apikey:
+              'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVocGluZm9nenB0enN2dWxocHZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMjQyNjEsImV4cCI6MjA2OTgwMDI2MX0.PrVCuwG314G4x3YW-b3p1-xHDLjcLyLbxvh4fMt_UvE',
+            Authorization:
+              'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVocGluZm9nenB0enN2dWxocHZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMjQyNjEsImV4cCI6MjA2OTgwMDI2MX0.PrVCuwG314G4x3YW-b3p1-xHDLjcLyLbxvh4fMt_UvE',
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.length > 0) {
+        setDonor(data[0]);
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.log(error);
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: colors.background,
+        }}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   if (!donor) return null;
 
   const initials = donor.Name
-    ? donor.Name.trim().split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
+    ? donor.Name.trim()
+        .split(' ')
+        .map((n) => n[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase()
     : '?';
 
   const fields = Object.entries(FIELD_META).map(([key, meta], i) => ({
@@ -87,13 +157,18 @@ export default function DonorDetail() {
   }));
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={['top']}
+    >
       {/* Top Bar */}
       <View style={[styles.topBar, { borderBottomColor: colors.border }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
-          style={[styles.backBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+          style={[
+            styles.backBtn,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
         >
           <Text style={[styles.backArrow, { color: colors.text }]}>‹</Text>
         </TouchableOpacity>
@@ -106,15 +181,22 @@ export default function DonorDetail() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-
-        {/* Hero Section */}
+        {/* Hero */}
         <Animated.View
           style={[
             styles.hero,
             { opacity: headerFade, transform: [{ translateY: headerSlide }] },
           ]}
         >
-          <View style={[styles.avatar, { backgroundColor: colors.primary + '1A', borderColor: colors.primary + '44' }]}>
+          <View
+            style={[
+              styles.avatar,
+              {
+                backgroundColor: colors.primary + '1A',
+                borderColor: colors.primary + '44',
+              },
+            ]}
+          >
             <Text style={[styles.avatarText, { color: colors.primary }]}>
               {initials}
             </Text>
@@ -124,24 +206,26 @@ export default function DonorDetail() {
             {donor.Name}
           </Text>
 
-          <View style={[styles.heroPill, { backgroundColor: colors.success + '20' }]}>
+          <View
+            style={[
+              styles.heroPill,
+              { backgroundColor: colors.success + '20' },
+            ]}
+          >
             <Text style={[styles.heroPillText, { color: colors.success }]}>
               ID: {donor.Donor_id} · {donor.BloodGroup}
             </Text>
           </View>
         </Animated.View>
 
-        {/* Section Label */}
         <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
           MEDICAL DETAILS
         </Text>
 
-        {/* Cards */}
         <View style={styles.cardsWrap}>
-          {fields.map(f => (
+          {fields.map((f) => (
             <DetailCard
               key={f.key}
-              icon={f.icon}
               label={f.label}
               value={f.value}
               colors={colors}
@@ -149,7 +233,6 @@ export default function DonorDetail() {
             />
           ))}
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -219,23 +302,12 @@ const styles = StyleSheet.create({
   cardsWrap: { paddingHorizontal: 16, gap: 10 },
 
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 16,
     padding: 14,
-    gap: 14,
   },
 
-  iconBadge: {
-    width: 46,
-    height: 46,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  iconText: { fontSize: 20 },
   label: { fontSize: 10, fontWeight: '700', letterSpacing: 1, marginBottom: 4 },
   value: { fontSize: 16, fontWeight: '600' },
 });
+
