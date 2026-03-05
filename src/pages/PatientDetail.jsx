@@ -11,23 +11,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppTheme } from '../../src/Theme/ThemeContext';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
-const FIELD_META = {
-  
-  BodyMass: { label: 'BODY MASS (kg)' },
-  RhFactor: { label: 'RH FACTOR' },
-  CMVStatus: { label: 'CMV STATUS' },
-  DiseaseType: { label: 'DISEASE TYPE' },
-  DiseaseGroup: { label: 'DISEASE GROUP' },
-  RiskGroup: { label: 'RISK GROUP' },
-  OutcomeVariable: { label: 'OUTCOME' },
-  PostRelapseTransplant: { label: 'POST RELAPSE TRANSPLANT' },
-  Fever: { label: 'FEVER' },
-  Cough: { label: 'COUGH' },
-  Fatigue: { label: 'FATIGUE' },
-  DifficultyBreathing: { label: 'DIFFICULTY BREATHING' },
-  BloodPressure: { label: 'BLOOD PRESSURE' },
-  CholesterolLevel: { label: 'CHOLESTEROL LEVEL' },
-};
 
 const DetailCard = ({ label, value, colors, delay }) => {
   const fade = useRef(new Animated.Value(0)).current;
@@ -84,12 +67,6 @@ export default function PatientDetail() {
     ? patient.Name.trim().split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
     : '?';
 
-  const fields = Object.entries(FIELD_META).map(([key, meta], i) => ({
-    ...meta,
-    key,
-    value: patient[key],
-    delay: 120 + i * 60,
-  }));
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -142,18 +119,6 @@ export default function PatientDetail() {
         </Text>
 
         {/* Cards */}
-        <View style={styles.cardsWrap}>
-          {fields.map(f => (
-            <DetailCard
-              key={f.key}
-              label={f.label}
-              value={f.value}
-              colors={colors}
-              delay={f.delay}
-            />
-          ))}
-        </View>
-
       </ScrollView>
     </SafeAreaView>
   );

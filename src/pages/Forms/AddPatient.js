@@ -22,10 +22,6 @@ export default function AddPatient({ navigation }) {
   const [bodyMass, setBodyMass] = useState('');
   const [rhFactor, setRhFactor] = useState('');
   const [cmvStatus, setCmvStatus] = useState('');
-  const [diseaseType, setDiseaseType] = useState('');
-  const [diseaseGroup, setDiseaseGroup] = useState('');
-  const [riskGroup, setRiskGroup] = useState('');
-  const [postRelapse, setPostRelapse] = useState('');
 
  const handleSubmit = async () => {
   try {
@@ -41,17 +37,13 @@ export default function AddPatient({ navigation }) {
         },
         body: JSON.stringify({
           Name: name,
-          Age: parseInt(age),
+          Age: age ? parseInt(age) : null,
           Gender: gender,
           BloodGroup: bloodGroup,
           Contact: contact,
-          BodyMass: parseFloat(bodyMass),
+          BodyMass: bodyMass,
           RhFactor: rhFactor,
           CMVStatus: cmvStatus,
-          DiseaseType: diseaseType,
-          DiseaseGroup: diseaseGroup,
-          RiskGroup: riskGroup,
-          PostRelapseTransplant: postRelapse.toLowerCase() === 'yes',
         }),
       }
     );
@@ -160,34 +152,6 @@ export default function AddPatient({ navigation }) {
             placeholderTextColor={colors.textSecondary}
             style={[styles.input, { borderColor: colors.border, color: colors.text }]}
             onChangeText={setCmvStatus}
-          />
-
-          <TextInput
-            placeholder="Disease Type"
-            placeholderTextColor={colors.textSecondary}
-            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
-            onChangeText={setDiseaseType}
-          />
-
-          <TextInput
-            placeholder="Disease Group (malignant/nonmalignant)"
-            placeholderTextColor={colors.textSecondary}
-            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
-            onChangeText={setDiseaseGroup}
-          />
-
-          <TextInput
-            placeholder="Risk Group (high/low)"
-            placeholderTextColor={colors.textSecondary}
-            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
-            onChangeText={setRiskGroup}
-          />
-
-          <TextInput
-            placeholder="Post Relapse Transplant (yes/no)"
-            placeholderTextColor={colors.textSecondary}
-            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
-            onChangeText={setPostRelapse}
           />
 
           <TextInput

@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppTheme } from '../../src/Theme/ThemeContext';
 import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
+import SymptomSelector from '../components/Multiselect';
 
 const API_URL = 'https://uhpinfogzptzsvulhpvr.supabase.co/rest/v1';
 const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVocGluZm9nenB0enN2dWxocHZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMjQyNjEsImV4cCI6MjA2OTgwMDI2MX0.PrVCuwG314G4x3YW-b3p1-xHDLjcLyLbxvh4fMt_UvE';
@@ -68,71 +69,6 @@ const SectionLabel = ({ text, colors }) => (
   <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>{text}</Text>
 );
 
-const SymptomToggle = ({ label, icon, value, onChange, colors }) => {
-  return (
-    <View style={[styles.symptomCard, { backgroundColor: colors.card, borderColor: value !== null ? colors.primary : colors.border }]}>
-      <View style={styles.symptomHeader}>
-        <Text style={styles.symptomIcon}>{icon}</Text>
-        <Text style={[styles.symptomLabel, { color: colors.text }]}>{label}</Text>
-      </View>
-      <View style={styles.pillRow}>
-        {['Yes', 'No'].map(opt => {
-          const active = value === opt;
-          const isYes = opt === 'Yes';
-          return (
-            <TouchableOpacity
-              key={opt}
-              onPress={() => onChange(opt)}
-              activeOpacity={0.75}
-              style={[
-                styles.pill,
-                active
-                  ? { backgroundColor: isYes ? '#EF4444DD' : '#22C55EDD', borderColor: 'transparent' }
-                  : { backgroundColor: 'transparent', borderColor: colors.border },
-              ]}
-            >
-              <Text style={[styles.pillText, { color: active ? '#fff' : colors.textSecondary }]}>
-                {opt}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </View>
-  );
-};
-
-const SegmentedControl = ({ label, icon, value, onChange, colors, options = ['Normal', 'High'] }) => (
-  <View style={[styles.symptomCard, { backgroundColor: colors.card, borderColor: value !== null ? colors.primary : colors.border }]}>
-    <View style={styles.symptomHeader}>
-      <Text style={styles.symptomIcon}>{icon}</Text>
-      <Text style={[styles.symptomLabel, { color: colors.text }]}>{label}</Text>
-    </View>
-    <View style={styles.pillRow}>
-      {options.map(opt => {
-        const active = value === opt;
-        return (
-          <TouchableOpacity
-            key={opt}
-            onPress={() => onChange(opt)}
-            activeOpacity={0.75}
-            style={[
-              styles.pill,
-              { flex: 1 },
-              active
-                ? { backgroundColor: colors.primary, borderColor: 'transparent' }
-                : { backgroundColor: 'transparent', borderColor: colors.border },
-            ]}
-          >
-            <Text style={[styles.pillText, { color: active ? '#fff' : colors.textSecondary }]}>
-              {opt}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  </View>
-);
 
 export default function DiseasePredict() {
   const { colors } = useAppTheme();
@@ -142,25 +78,16 @@ export default function DiseasePredict() {
   const headerFade = useRef(new Animated.Value(0)).current;
   const headerSlide = useRef(new Animated.Value(-12)).current;
 
-  // Symptom fields
-  const [fever, setFever] = useState(null);
-  const [cough, setCough] = useState(null);
-  const [fatigue, setFatigue] = useState(null);
-  const [difficultyBreathing, setDifficultyBreathing] = useState(null);
-  const [bloodPressure, setBloodPressure] = useState(null);
-  const [cholesterol, setCholesterol] = useState(null);
+
+  const [selectedSymptoms, setSelectedSymptoms] = useState([]);
 
   const [loading, setLoading] = useState(false);
 
   const validateFields = () => {
-    if (!fever)              return 'Please answer: Fever?';
-    if (!cough)              return 'Please answer: Cough?';
-    if (!fatigue)            return 'Please answer: Fatigue?';
-    if (!difficultyBreathing) return 'Please answer: Difficulty Breathing?';
-    if (!bloodPressure)      return 'Please select Blood Pressure level.';
-    if (!cholesterol)        return 'Please select Cholesterol level.';
-    return null;
-  };
+  if (selectedSymptoms.length === 0)
+    return "Please select at least one symptom";
+  return null;
+};
 
   const handleSubmit = async () => {
     const error = validateFields();
@@ -177,12 +104,7 @@ export default function DiseasePredict() {
         body: JSON.stringify({
           Name: patient.Name,  
           Patient_id: patient.Patient_id,          
-          Fever: fever,
-          Cough: cough,
-          Fatigue: fatigue,
-          DifficultyBreathing: difficultyBreathing,
-          BloodPressure: bloodPressure,
-          CholesterolLevel: cholesterol,
+          Symptoms: selectedSymptoms
         }),
       });
 
@@ -250,22 +172,6 @@ export default function DiseasePredict() {
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-        {/* Hero / Avatar Block */}
-        {/* <Animated.View
-          style={[styles.heroSection, { opacity: headerFade, transform: [{ translateY: headerSlide }] }]}
-        >
-          <View style={[styles.avatar, { backgroundColor: colors.primary + '1A', borderColor: colors.primary + '44' }]}>
-            <Text style={[styles.avatarInitials, { color: colors.primary }]}>{initials}</Text>
-          </View>
-          <Text style={[styles.heroName, { color: colors.text }]}>{patient.Name || 'Unknown Patient'}</Text>
-          <View style={[styles.heroPill, { backgroundColor: colors.primary + '15' }]}>
-            <Text style={[styles.heroPillText, { color: colors.primary }]}>
-              {[patient.Gender, patient.Age ? `${patient.Age} yrs` : null, patient.BloodGroup]
-                .filter(Boolean).join('  ·  ') || 'No info available'}
-            </Text>
-          </View>
-        </Animated.View> */}
-
         {/* Section Label */}
         <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
           PERSONAL DETAILS
@@ -286,20 +192,12 @@ export default function DiseasePredict() {
         </View>
 
         {/* Symptoms */}
-        <SectionLabel text="SYMPTOM INDICATORS" colors={colors} />
-        <View style={styles.symptomsGrid}>
-          <SymptomToggle label="Fever"               value={fever}               onChange={setFever}               colors={colors} />
-          <SymptomToggle label="Cough"               value={cough}               onChange={setCough}               colors={colors} />
-          <SymptomToggle label="Fatigue"             value={fatigue}             onChange={setFatigue}             colors={colors} />
-          <SymptomToggle label="Difficulty Breathing" value={difficultyBreathing} onChange={setDifficultyBreathing} colors={colors} />
-        </View>
+        <SectionLabel text="SELECTED SYMPTOMS" colors={colors} />
 
-        {/* Vitals */}
-        <SectionLabel text="VITALS" colors={colors} />
-        <View style={styles.symptomsGrid}>
-          <SegmentedControl label="Blood Pressure"   value={bloodPressure} onChange={setBloodPressure} colors={colors} />
-          <SegmentedControl label="Cholesterol Level" value={cholesterol}   onChange={setCholesterol}   colors={colors} />
-        </View>
+        <SymptomSelector
+          selected={selectedSymptoms}
+          setSelected={setSelectedSymptoms}
+        />
 
         {/* Submit */}
         <TouchableOpacity
