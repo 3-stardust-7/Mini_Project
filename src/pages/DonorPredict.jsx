@@ -44,9 +44,21 @@ const HLA_FIELD_META = [
   { key1: 'Hla_dqb1_1', key2: 'Hla_dqb1_2', label: 'HLA-DQB1' },
 ];
 
+const DISEASE_TYPE_OPTIONS = [
+  { label: 'ALL', value: 'ALL' },
+  { label: 'AML', value: 'AML' },
+  { label: 'Chronic', value: 'Chronic' },
+  { label: 'Non-malignant', value: 'Non-malignant' },
+  { label: 'Lymphoma', value: 'Lymphoma' },
+];
+
+const DISEASE_GROUP_OPTIONS = [
+  { label: 'Malignant', value: 'Malignant' },
+  { label: 'Non-malignant', value: 'Non-malignant' },
+];
+
 const RISK_GROUP_OPTIONS = [
   { label: 'Low',    value: 'low' },
-  { label: 'Medium', value: 'medium' },
   { label: 'High',   value: 'high' },
 ];
 
@@ -126,6 +138,8 @@ export default function DonorPredict() {
   const [postRelapse,  setPostRelapse]  = useState('');
   const [loading,      setLoading]      = useState(false);
 
+  const BACKEND_URL = "http://192.168.66.33:8000";
+
   useEffect(() => {
   setDiseaseType(patient.DiseaseType || '');
   setDiseaseGroup(patient.DiseaseGroup || '');
@@ -163,11 +177,11 @@ export default function DonorPredict() {
       Alert.alert('Missing Field', 'Please enter Disease Group.');
       return;
     }
-    if (isEmpty(patient.riskGroup) && !riskGroup) {
+    if (isEmpty(patient.RiskGroup) && !riskGroup) {
       Alert.alert('Missing Field', 'Please select a Risk Group.');
       return;
     }
-    if (isEmpty(patient.postRelapse) && !postRelapse) {
+    if (isEmpty(patient.PostRelapse) && !postRelapse) {
       Alert.alert('Missing Field', 'Please select Post Relapse status.');
       return;
     }
@@ -194,9 +208,27 @@ export default function DonorPredict() {
         Alert.alert('Error', 'Failed to update patient record.');
         return;
       }
+      let top5Data = [];
+      try {
+        const top5Res = await fetch(`${BACKEND_URL}/find-top5/${patient.Patient_id}`, { method: 'POST' });
 
-      Alert.alert('Saved', 'Patient record updated successfully.', [
-        { text: 'OK', onPress: () => navigation.navigate('MainTabs') },
+        if (top5Res.ok) {
+          top5Data = await top5Res.json();
+          console.log("Top 5 matches:", top5Data.data);      // the array
+          console.log("Message:", top5Data.message);          // success message
+        } else {
+          const err = await top5Res.text();
+          console.error("Top5 error:", err);
+          Alert.alert("Warning", "Patient updated but failed to generate matches.");
+        }
+      } catch (err) {
+        console.error("Top5 fetch failed:", err);
+        Alert.alert("Warning", "Patient updated but failed to generate matches.");
+      }
+
+      // ✅ show success anyway
+      Alert.alert("Saved", "Patient updated ✅", [
+        { text: "OK", onPress: () => navigation.navigate("MainTabs") },
       ]);
     } catch (err) {
       console.error(err);
@@ -272,12 +304,16 @@ export default function DonorPredict() {
         {/* Disease Type */}
         <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>DISEASE TYPE</Text>
         {isEmpty(patient.DiseaseType) ? (
-            <TextInput
-            placeholder="e.g. Leukemia, Lymphoma..."
-            placeholderTextColor={colors.textSecondary}
-            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
-            value={diseaseType}
-            onChangeText={setDiseaseType}
+            <Dropdown
+              style={[styles.input, { borderColor: colors.border }]}
+              data={DISEASE_TYPE_OPTIONS}
+              labelField="label"
+              valueField="value"
+              placeholder="Select disease type"
+              value={diseaseType}
+              onChange={item => setDiseaseType(item.value)}
+              placeholderStyle={{ color: colors.textSecondary }}
+              selectedTextStyle={{ color: colors.text }}
             />
         ) : (
             <Text style={[styles.detailValue, { color: colors.text, marginBottom: 20 }]}>
@@ -288,12 +324,16 @@ export default function DonorPredict() {
         {/* Disease Group */}
         <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>DISEASE GROUP</Text>
         {isEmpty(patient.DiseaseGroup) ? (
-            <TextInput
-            placeholder="e.g. Malignant, Non-malignant..."
-            placeholderTextColor={colors.textSecondary}
-            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
-            value={diseaseGroup}
-            onChangeText={setDiseaseGroup}
+            <Dropdown
+              style={[styles.input, { borderColor: colors.border }]}
+              data={DISEASE_GROUP_OPTIONS}
+              labelField="label"
+              valueField="value"
+              placeholder="Select disease group"
+              value={diseaseGroup}
+              onChange={item => setDiseaseGroup(item.value)}
+              placeholderStyle={{ color: colors.textSecondary }}
+              selectedTextStyle={{ color: colors.text }}
             />
         ) : (
             <Text style={[styles.detailValue, { color: colors.text, marginBottom: 20 }]}>

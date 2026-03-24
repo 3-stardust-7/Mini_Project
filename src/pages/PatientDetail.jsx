@@ -6,10 +6,22 @@ import {
   ScrollView,
   TouchableOpacity,
   Animated,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppTheme } from '../../src/Theme/ThemeContext';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import DonorTabs from '../components/DonorTabs.jsx';
+
+const API_URL = 'https://uhpinfogzptzsvulhpvr.supabase.co/rest/v1';
+const API_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVocGluZm9nenB0enN2dWxocHZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMjQyNjEsImV4cCI6MjA2OTgwMDI2MX0.PrVCuwG314G4x3YW-b3p1-xHDLjcLyLbxvh4fMt_UvE';
+
+const HEADERS = {
+  apikey: API_KEY,
+  Authorization: `Bearer ${API_KEY}`,
+  'Content-Type': 'application/json',
+};
 
 const DetailCard = ({ label, value, colors, delay }) => {
   const fade = useRef(new Animated.Value(0)).current;
@@ -61,6 +73,41 @@ export default function PatientDetail() {
   const navigation = useNavigation();
   const route = useRoute();
   const { patient } = route.params;
+   const [refreshing, setRefreshing] = useState(false);
+  
+    const onRefresh = async () => {
+      setRefreshing(true);
+      setRefreshing(false);
+    };
+  
+
+  const [donors, setDonors] = useState([]);
+  const [loadingDonors, setLoadingDonors] = useState(true);
+
+
+useEffect(() => {
+  const fetchDonors = async () => {
+    try {
+      const res = await fetch(
+        `${API_URL}/Patient-Donor?Patient_id=eq.${patient.Patient_id}`,
+        {
+          headers: HEADERS,
+        }
+      );
+
+      const data = await res.json();
+      console.log("DATAAAAAAA: ",data)
+      setDonors(data || []);
+    } catch (err) {
+      console.error('Error fetching donors:', err);
+    } finally {
+      setLoadingDonors(false);
+    }
+  };
+
+  fetchDonors();
+}, []);
+
 
   const headerFade = useRef(new Animated.Value(0)).current;
   const headerSlide = useRef(new Animated.Value(-12)).current;
@@ -97,7 +144,12 @@ export default function PatientDetail() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+              contentContainerStyle={styles.scrollContent}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
+            >
 
         {/* Hero Section */}
         <Animated.View
@@ -168,6 +220,15 @@ export default function PatientDetail() {
           <DetailCard label="HLA-DRB1" value={`${patient.Hla_drb1_1 || '-'} / ${patient.Hla_drb1_2 || '-'}`} colors={colors} />
           <DetailCard label="HLA-DQB1" value={`${patient.Hla_dqb1_1 || '-'} / ${patient.Hla_dqb1_2 || '-'}`} colors={colors} />
         </View>
+
+ {!loadingDonors && donors.length > 0 && (
+  <>
+    <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+      MATCHED DONORS
+    </Text>
+    <DonorTabs donors={donors} colors={colors} />
+  </>
+)}
       </ScrollView>
     </SafeAreaView>
   );
