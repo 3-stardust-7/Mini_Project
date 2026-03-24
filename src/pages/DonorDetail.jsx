@@ -70,73 +70,10 @@ export default function DonorDetail() {
   const { colors } = useAppTheme();
   const navigation = useNavigation();
   const route = useRoute();
-
-  const donorId = route.params?.donorId;
-
-  const [donor, setDonor] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const {donor}=route.params;
 
   const headerFade = useRef(new Animated.Value(0)).current;
   const headerSlide = useRef(new Animated.Value(-12)).current;
-
-  useEffect(() => {
-    fetchDonor();
-
-    Animated.parallel([
-      Animated.timing(headerFade, {
-        toValue: 1,
-        duration: 500,
-        useNativeDriver: true,
-      }),
-      Animated.timing(headerSlide, {
-        toValue: 0,
-        duration: 420,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
-  const fetchDonor = async () => {
-    try {
-      const response = await fetch(
-        `https://uhpinfogzptzsvulhpvr.supabase.co/rest/v1/Donor?Donor_id=eq.${donorId}&select=*`,
-        {
-          headers: {
-            apikey:
-              'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVocGluZm9nenB0enN2dWxocHZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMjQyNjEsImV4cCI6MjA2OTgwMDI2MX0.PrVCuwG314G4x3YW-b3p1-xHDLjcLyLbxvh4fMt_UvE',
-            Authorization:
-              'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVocGluZm9nenB0enN2dWxocHZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMjQyNjEsImV4cCI6MjA2OTgwMDI2MX0.PrVCuwG314G4x3YW-b3p1-xHDLjcLyLbxvh4fMt_UvE',
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (data.length > 0) {
-        setDonor(data[0]);
-      }
-
-      setLoading(false);
-    } catch (error) {
-      console.log(error);
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: colors.background,
-        }}
-      >
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
 
   if (!donor) return null;
 
@@ -148,13 +85,13 @@ export default function DonorDetail() {
         .join('')
         .toUpperCase()
     : '?';
-
-  const fields = Object.entries(FIELD_META).map(([key, meta], i) => ({
-    ...meta,
-    key,
-    value: donor[key],
-    delay: 120 + i * 60,
-  }));
+    
+useEffect(() => {
+      Animated.parallel([
+        Animated.timing(headerFade, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.timing(headerSlide, { toValue: 0, duration: 420, useNativeDriver: true }),
+      ]).start();
+    }, []);
 
   return (
     <SafeAreaView
@@ -181,58 +118,56 @@ export default function DonorDetail() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Hero */}
-        <Animated.View
-          style={[
-            styles.hero,
-            { opacity: headerFade, transform: [{ translateY: headerSlide }] },
-          ]}
-        >
-          <View
-            style={[
-              styles.avatar,
-              {
-                backgroundColor: colors.primary + '1A',
-                borderColor: colors.primary + '44',
-              },
-            ]}
-          >
-            <Text style={[styles.avatarText, { color: colors.primary }]}>
-              {initials}
-            </Text>
-          </View>
+        {/* Hero Section */}
+               <Animated.View
+                 style={[
+                   styles.hero,
+                   { opacity: headerFade, transform: [{ translateY: headerSlide }] },
+                 ]}
+               >
+                 <View style={[styles.avatar, { backgroundColor: colors.primary + '1A', borderColor: colors.primary + '44' }]}>
+                   <Text style={[styles.avatarText, { color: colors.primary }]}>
+                     {initials}
+                   </Text>
+                 </View>
+       
+                 <Text style={[styles.heroName, { color: colors.text }]}>
+                   {donor.Name}
+                 </Text>
+       
+                 <View style={[styles.heroPill, { backgroundColor: colors.error + '20' }]}>
+                   <Text style={[styles.heroPillText, { color: colors.error }]}>
+                     ID: {donor.donor_id} · {donor.RiskGroup || 'N/A'}
+                   </Text>
+                 </View>
+               </Animated.View>
+       
+               {/* Section Label */}
+               <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+                 CLINICAL DETAILS
+               </Text>
+       
+               {/* Cards */}
+               <View style={styles.cardsWrap}>
+                 <DetailCard label="Age" value={donor.Age} colors={colors} />
+                 <DetailCard label="Gender" value={donor.Gender} colors={colors} />
+                 <DetailCard label="Blood Group" value={donor.BloodGroup} colors={colors} />
+                 <DetailCard label="Body Mass" value={donor.BodyMass} colors={colors} />
+                 <DetailCard label="CMV Status" value={donor.CMVStatus} colors={colors} />
+               </View>
 
-          <Text style={[styles.heroName, { color: colors.text }]}>
-            {donor.Name}
-          </Text>
+               <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+                         HLA TYPING
+                       </Text>
+               
+                       <View style={styles.cardsWrap}>
+                         <DetailCard label="HLA-A" value={`${donor.Hla_a_1 || '-'} / ${donor.Hla_a_2 || '-'}`} colors={colors} />
+                         <DetailCard label="HLA-B" value={`${donor.Hla_b_1 || '-'} / ${donor.Hla_b_2 || '-'}`} colors={colors} />
+                         <DetailCard label="HLA-C" value={`${donor.Hla_c_1 || '-'} / ${donor.Hla_c_2 || '-'}`} colors={colors} />
+                         <DetailCard label="HLA-DRB1" value={`${donor.Hla_drb1_1 || '-'} / ${donor.Hla_drb1_2 || '-'}`} colors={colors} />
+                         <DetailCard label="HLA-DQB1" value={`${donor.Hla_dqb1_1 || '-'} / ${donor.Hla_dqb1_2 || '-'}`} colors={colors} />
+                       </View>
 
-          <View
-            style={[
-              styles.heroPill,
-              { backgroundColor: colors.success + '20' },
-            ]}
-          >
-            <Text style={[styles.heroPillText, { color: colors.success }]}>
-              ID: {donor.Donor_id} · {donor.BloodGroup}
-            </Text>
-          </View>
-        </Animated.View>
-
-        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-          MEDICAL DETAILS
-        </Text>
-
-        <View style={styles.cardsWrap}>
-          {fields.map((f) => (
-            <DetailCard
-              key={f.key}
-              label={f.label}
-              value={f.value}
-              colors={colors}
-              delay={f.delay}
-            />
-          ))}
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -296,7 +231,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1.3,
     marginHorizontal: 20,
-    marginBottom: 10,
+    marginTop: 20,
+    marginBottom:10,
   },
 
   cardsWrap: { paddingHorizontal: 16, gap: 10 },

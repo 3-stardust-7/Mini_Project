@@ -11,82 +11,72 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppTheme } from '../../src/Theme/ThemeContext';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
-const DetailCard = ({ label, value, colors }) => (
-  <View
-    style={[
-      styles.card,
-      { backgroundColor: colors.card, borderColor: colors.border },
-    ]}
-  >
-    <Text style={[styles.label, { color: colors.textSecondary }]}>
-      {label}
-    </Text>
-    <Text style={[styles.value, { color: colors.text }]}>
-      {value ?? '—'}
-    </Text>
-  </View>
-);
+const DetailCard = ({ label, value, colors, delay }) => {
+  const fade = useRef(new Animated.Value(0)).current;
+  const slide = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fade, {
+        toValue: 1,
+        duration: 400,
+        delay,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slide, {
+        toValue: 0,
+        duration: 350,
+        delay,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+          opacity: fade,
+          transform: [{ translateY: slide }],
+        },
+      ]}
+    >
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.label, { color: colors.textSecondary }]}>
+          {label}
+        </Text>
+        <Text style={[styles.value, { color: colors.text }]}>
+          {value ?? '—'}
+        </Text>
+      </View>
+    </Animated.View>
+  );
+};
 
 export default function PatientDetail() {
   const { colors } = useAppTheme();
   const navigation = useNavigation();
   const route = useRoute();
-  const patientId = route.params?.patientId;
-
-  const [patient, setPatient] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { patient } = route.params;
 
   const headerFade = useRef(new Animated.Value(0)).current;
   const headerSlide = useRef(new Animated.Value(-12)).current;
 
-  useEffect(() => {
-    fetchPatient();
-    Animated.parallel([
-      Animated.timing(headerFade, { toValue: 1, duration: 500, useNativeDriver: true }),
-      Animated.timing(headerSlide, { toValue: 0, duration: 420, useNativeDriver: true }),
-    ]).start();
-  }, []);
-
-  const fetchPatient = async () => {
-  try {
-    const response = await fetch(
-      `https://uhpinfogzptzsvulhpvr.supabase.co/rest/v1/Patient?Patient_id=eq.${patientId}&select=*`,
-      {
-          headers: {
-            apikey:
-              'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVocGluZm9nenB0enN2dWxocHZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMjQyNjEsImV4cCI6MjA2OTgwMDI2MX0.PrVCuwG314G4x3YW-b3p1-xHDLjcLyLbxvh4fMt_UvE',
-            Authorization:
-              'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVocGluZm9nenB0enN2dWxocHZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMjQyNjEsImV4cCI6MjA2OTgwMDI2MX0.PrVCuwG314G4x3YW-b3p1-xHDLjcLyLbxvh4fMt_UvE',
-          },
-        }
-    );
-
-    const data = await response.json();
-
-    if (data.length > 0) {
-      setPatient(data[0]);
-    }
-
-    setLoading(false);
-  } catch (error) {
-    console.log(error);
-    setLoading(false);
-  }
-};
-
-  if (loading) {
-  return (
-    <View style={{ flex:1, justifyContent:'center', alignItems:'center' }}>
-      <Text>Loading...</Text>
-    </View>
-  );
-}
   if (!patient) return null;
 
   const initials = patient.Name
     ? patient.Name.trim().split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
     : '?';
 
+    useEffect(() => {
+      Animated.parallel([
+        Animated.timing(headerFade, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.timing(headerSlide, { toValue: 0, duration: 420, useNativeDriver: true }),
+      ]).start();
+    }, []);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -145,6 +135,38 @@ export default function PatientDetail() {
           <DetailCard label="Blood Group" value={patient.BloodGroup} colors={colors} />
           <DetailCard label="Body Mass" value={patient.BodyMass} colors={colors} />
           <DetailCard label="CMV Status" value={patient.CMVStatus} colors={colors} />
+        </View>
+
+        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+          DISEASE INFO
+        </Text>
+
+        <View style={styles.cardsWrap}>
+          <DetailCard label="Disease Type" value={patient.DiseaseType} colors={colors} />
+          <DetailCard label="Disease Group" value={patient.DiseaseGroup} colors={colors} />
+          <DetailCard label="Risk Group" value={patient.RiskGroup} colors={colors} />
+          <DetailCard label="Post Relapse" value={patient.PostRelapse} colors={colors} />
+        </View>
+
+        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+          BIOLOGICAL
+        </Text>
+
+        <View style={styles.cardsWrap}>
+          <DetailCard label="Rh Factor" value={patient.RhFactor} colors={colors} />
+          <DetailCard label="Contact" value={patient.Contact} colors={colors} />
+        </View>
+
+        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+          HLA TYPING
+        </Text>
+
+        <View style={styles.cardsWrap}>
+          <DetailCard label="HLA-A" value={`${patient.Hla_a_1 || '-'} / ${patient.Hla_a_2 || '-'}`} colors={colors} />
+          <DetailCard label="HLA-B" value={`${patient.Hla_b_1 || '-'} / ${patient.Hla_b_2 || '-'}`} colors={colors} />
+          <DetailCard label="HLA-C" value={`${patient.Hla_c_1 || '-'} / ${patient.Hla_c_2 || '-'}`} colors={colors} />
+          <DetailCard label="HLA-DRB1" value={`${patient.Hla_drb1_1 || '-'} / ${patient.Hla_drb1_2 || '-'}`} colors={colors} />
+          <DetailCard label="HLA-DQB1" value={`${patient.Hla_dqb1_1 || '-'} / ${patient.Hla_dqb1_2 || '-'}`} colors={colors} />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -209,7 +231,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1.3,
     marginHorizontal: 20,
-    marginBottom: 10,
+    marginTop: 20,
+    marginBottom:10,
   },
 
   cardsWrap: { paddingHorizontal: 16, gap: 10 },

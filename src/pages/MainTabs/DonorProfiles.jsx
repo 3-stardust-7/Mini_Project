@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -15,6 +16,13 @@ export default function DonorProfiles({ navigation }) {
   const { colors } = useAppTheme();
   const [donors, setDonors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  
+    const onRefresh = async () => {
+      setRefreshing(true);
+      await fetchDonors();
+      setRefreshing(false);
+    };
 
   useEffect(() => {
     fetchDonors();
@@ -51,7 +59,7 @@ export default function DonorProfiles({ navigation }) {
         { backgroundColor: colors.card, borderColor: colors.border },
       ]}
       onPress={() => navigation.navigate('DonorDetail', { 
-          donorId: donor.Donor_id
+          donor: donor
        })}
       activeOpacity={0.8}
     >
@@ -100,7 +108,12 @@ export default function DonorProfiles({ navigation }) {
       style={[styles.container, { backgroundColor: colors.background }]}
       edges={['top']}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+              contentContainerStyle={styles.scrollContent}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
+            >
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>
             Donor Profiles

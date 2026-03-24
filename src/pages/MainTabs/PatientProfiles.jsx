@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -15,6 +16,13 @@ export default function PatientProfiles({ navigation }) {
   const { colors } = useAppTheme();
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchPatients();
+    setRefreshing(false);
+  };
 
   useEffect(() => {
     fetchPatients();
@@ -23,7 +31,7 @@ export default function PatientProfiles({ navigation }) {
   const fetchPatients = async () => {
     try {
       const response = await fetch(
-        'https://uhpinfogzptzsvulhpvr.supabase.co/rest/v1/Patient-Disease?select=*',
+        'https://uhpinfogzptzsvulhpvr.supabase.co/rest/v1/Patient?select=*',
         {
           headers: {
             apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVocGluZm9nenB0enN2dWxocHZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMjQyNjEsImV4cCI6MjA2OTgwMDI2MX0.PrVCuwG314G4x3YW-b3p1-xHDLjcLyLbxvh4fMt_UvE',
@@ -51,7 +59,7 @@ export default function PatientProfiles({ navigation }) {
       ]}
       onPress={() => 
         navigation.navigate('PatientDetail', {
-        patientId: patient.Patient_id
+        patient: patient
         })
       }
       activeOpacity={0.8}
@@ -120,7 +128,12 @@ export default function PatientProfiles({ navigation }) {
       style={[styles.container, { backgroundColor: colors.background }]}
       edges={['top']}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>
             Patient Profiles
@@ -134,7 +147,7 @@ export default function PatientProfiles({ navigation }) {
           <ActivityIndicator size="large" color={colors.primary} />
         ) : (
           patients.map((patient) => (
-            <PatientCard key={patient.id} patient={patient} />
+            <PatientCard key={patient.Patient_id} patient={patient} />
           ))
         )}
 
